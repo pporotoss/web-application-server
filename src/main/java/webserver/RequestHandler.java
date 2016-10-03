@@ -48,7 +48,7 @@ public class RequestHandler extends Thread {
         	int contentLength = 0;
         	while(!line.equals("")) {
         		line = br.readLine();
-        		//log.debug("Header : {}", line);
+        		log.debug("Header : {}", line);
         		if(line.contains("Content-Length")) {
         			contentLength = getContentLength(line);
         			log.debug("Content-Length : {}", contentLength);
@@ -112,10 +112,17 @@ public class RequestHandler extends Thread {
 					sb.append("</tr>");
 				}
         		sb.append("</table>");
-        		byte[] body = sb.toString().getBytes();
         		DataOutputStream dos = new DataOutputStream(out);
+        		byte[] body = sb.toString().getBytes();
         		response200Header(dos, body.length);	// 200 응답코드 전송.
         		responseBody(dos, body);	// 바디 전송.
+        		
+        	} else if (url.endsWith(".css")) {	// 요청 url 마지막이 .css 이면,
+        		
+        		DataOutputStream dos = new DataOutputStream(out);
+        		byte[] body = Files.readAllBytes(new File("./webapp"+url).toPath());
+        		response200CssHeader(dos, body.length);
+        		responseBody(dos, body);
         		
         	} else {
         		responseResource(out, url);
@@ -139,6 +146,11 @@ public class RequestHandler extends Thread {
     	return Boolean.parseBoolean(value);
     }
     
+    private String getAccept(String line) {
+    	String[] headerTokens = line.split(":");
+    	return headerTokens[1].trim();
+    }
+    
     private int getContentLength(String line) {
     	String [] headerTokens = line.split(":");
     	return Integer.parseInt(headerTokens[1].trim());
@@ -160,6 +172,17 @@ public class RequestHandler extends Thread {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+    }
+    
+    private void response200CssHeader(DataOutputStream dos, int lengthOfBodyContent) {
+    	try {
+    		dos.writeBytes("HTTP/1.1 200 OK \r\n");
+    		dos.writeBytes("Content-Type: text/css;charset=utf-8\r\n");
+    		dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+    		dos.writeBytes("\r\n");
+    	} catch (IOException e) {
+    		log.error(e.getMessage());
+    	}
     }
     
     private void response302Header(DataOutputStream dos, String url) {	// 리다이렉트 헤더
