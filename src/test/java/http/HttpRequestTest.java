@@ -1,4 +1,4 @@
-package util;
+package http;
 
 import static org.junit.Assert.assertEquals;
 
