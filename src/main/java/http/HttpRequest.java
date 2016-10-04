@@ -86,6 +86,10 @@ public class HttpRequest {
 		return params.get(paramName);
 	}
 	
+	/**
+	 * 쿠키를 이용하여 로그인 검사.
+	 * @return 로그인 유무
+	 */
 	public boolean isLogin() {	// 로그인 검사
     	Map<String, String> cookies = HttpRequestUtils.parseCookies(getHeader("Cookie"));	// logined=true형식을 추출하여 키, 값으로 저장. 
     	logger.debug("cookies : {}", cookies);
