@@ -32,7 +32,6 @@ public class HttpRequestUtils {
     }
 
     private static Map<String, String> parseValues(String values, String separator) {
-    	logger.debug("parseValues : {}",values);
         if (Strings.isNullOrEmpty(values)) {
             return Maps.newHashMap();
         }

@@ -8,18 +8,21 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.print.attribute.standard.RequestingUserName;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import util.HttpRequestUtils;
+import util.IOUtils;
 
 public class HttpRequest {
 	private static final Logger logger = LoggerFactory.getLogger(HttpRequest.class);
 		
-	private String method;
-	private String path;
 	private Map<String, String> headers = new HashMap<>();
 	private Map<String, String> params = new HashMap<>();
+	private RequestLine requestLine;
+	private HttpMethod method;
 	
 	public HttpRequest (InputStream in) {
 		try {
@@ -30,7 +33,7 @@ public class HttpRequest {
 				return;
 			}
 			
-			processRequestLine(line);
+			requestLine = new RequestLine(line);
 			
 			line = br.readLine();
 			while(!line.equals("")) {
@@ -43,39 +46,34 @@ public class HttpRequest {
 				line = br.readLine();
 			}
 			
+			logger.debug("headers : {}", headers);
+			
+			method = HttpMethod.valueOf(requestLine.getMethod());	// 문자열을 Enum 객체화.
+			if(method.isPost()) {
+				int contentLength = Integer.parseInt(getHeader("Content-Length"));
+				logger.debug("contentLength : {}",contentLength);
+				String queryString = IOUtils.readData(br, contentLength);
+				logger.debug("queryString : {}", queryString);
+				params = HttpRequestUtils.parseQueryString(queryString);
+				logger.debug("params : {}", params);
+			} else {
+				params = requestLine.getParams();
+				logger.debug("params : {}", params);
+			}
+			
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 		}
 	}// Constructor
 	
-	private void processRequestLine(String requestLine) {
-		logger.debug("requestLine : {}", requestLine);
-		String[] headerLine = requestLine.split(" ");
-		method = headerLine[0];
-		logger.debug("method : {}", method);
-		
-		int index = headerLine[1].indexOf("?");
-		
-		logger.debug("index : {}", index);
-		
-		if(index == -1) {
-			path = headerLine[1];
-			logger.debug("-1 path : {}", path);
-		} else {
-			path = headerLine[1].substring(0, index);
-			logger.debug("path : {}", path);
-			params = HttpRequestUtils.parseQueryString(requestLine);
-		}
-	}
-	
 	public String getMethod() {
 		
-		return method;
+		return requestLine.getMethod();
 	}
 	
 	public String getPath() {
 		
-		return path;
+		return requestLine.getPath();
 	}
 	
 	public String getHeader(String headerName) {
@@ -87,4 +85,14 @@ public class HttpRequest {
 		
 		return params.get(paramName);
 	}
+	
+	public boolean isLogin() {	// 로그인 검사
+    	Map<String, String> cookies = HttpRequestUtils.parseCookies(getHeader("Cookie"));	// logined=true형식을 추출하여 키, 값으로 저장. 
+    	logger.debug("cookies : {}", cookies);
+    	String value = cookies.get("logined");	// 쿠키들중에서 키값이 logined인 쿠키를 반환.
+    	if (value == null) {
+    		return false;
+    	}
+    	return Boolean.parseBoolean(value);
+    }
 }
