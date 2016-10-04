@@ -127,10 +127,10 @@ public class RequestHandler extends Thread {
     
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
         try {
-            dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-            dos.writeBytes("\r\n");
+            dos.writeBytes("HTTP/1.1 200 OK \r\n");	// http프로토콜 버전, 상태코드, 상태.
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");	// 응답하는 컨텐트의 종류
+            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");	// 응답하는 컨텐트의 길이
+            dos.writeBytes("\r\n");	// 응답 헤더 마지막을 알리기위한 공백열 추가.
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -159,9 +159,9 @@ public class RequestHandler extends Thread {
     
     private void reponse302LoginSuccesHeader(DataOutputStream dos) {	// 로그인 성공시 페이지 이동 헤더.
     	try {
-    		dos.writeBytes("HTTP/1.1 302 Found \r\n");
+    		dos.writeBytes("HTTP/1.1 302 Found \r\n");	// 리다이렉션 코드 전송.
     		dos.writeBytes("Set-Cookie: logined=true \r\n");	// 쿠키 설정.
-    		dos.writeBytes("Location: /index.html");
+    		dos.writeBytes("Location: /index.html");	// 재접속 요청할 주소 전송.
     		dos.writeBytes("\r\n");
     	} catch (IOException e) {
     		log.error(e.getMessage());
@@ -170,7 +170,7 @@ public class RequestHandler extends Thread {
 
     private void responseBody(DataOutputStream dos, byte[] body) {
         try {
-            dos.write(body, 0, body.length);
+            dos.write(body, 0, body.length);	// 요청받은 페이지 내용 전송.
             dos.flush();
         } catch (IOException e) {
             log.error(e.getMessage());
